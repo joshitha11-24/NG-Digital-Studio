@@ -1,20 +1,19 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://ai.google.dev/static/site-assets/images/share-ais-513315318.png" />
-</div>
+# NG Digital Studio
 
-# Run and deploy your AI Studio app
+Full-stack studio management application, online booking platform, and admin panel for NG Digital Studio.
 
-This contains everything you need to run your app locally.
-
-View your app in AI Studio: https://ai.studio/apps/4f02df86-02ea-4902-8427-a3984e7e5cc9
+## Features
+- **Client Booking System**: Interactive booking flow for wedding, photoshoot, puberty, and event coverage.
+- **Admin Dashboard**: Analytics, booking management, customer records, reviews, and gallery administration.
+- **Backend API**: Secure Node/Express backend with Firebase integration.
 
 ## Run Locally
-
-**Prerequisites:**  Node.js
-
-
 1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+   ```bash
+   npm install
+   ```
+2. Configure `.env` with your Firebase & backend environment variables (refer to `.env.example`).
+3. Run development server:
+   ```bash
+   npm run dev
+   ```
