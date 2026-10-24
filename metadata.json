@@ -1,0 +1,6 @@
+{
+  "name": "NG Digital Studio",
+  "description": "Premium cinematic photography & studio management platform with client booking, portfolio collections, and dedicated administrative portal.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

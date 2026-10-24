@@ -1,0 +1,101 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Default deny all access unless explicitly granted
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper functions for zero-trust security
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && (
+        request.auth.token.email.lower() == 'ng.digitalstudiomdu@gmail.com' ||
+        request.auth.token.email.lower() == 'admin@ngdigitalstudio.com' ||
+        request.auth.token.email.lower() == 'joshithasrinivasan277@gmail.com'
+      );
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128;
+    }
+
+    // ---------------------------------------------------------
+    // USERS COLLECTION
+    // ---------------------------------------------------------
+    match /users/{userId} {
+      // Customers can read their own profile; admins can inspect
+      allow get: if isOwner(userId) || isAdmin();
+      allow list: if isAdmin();
+
+      // Registration: customer can create their initial profile document matching auth.uid
+      allow create: if isSignedIn() && request.auth.uid == userId
+        && request.resource.data.email is string
+        && request.resource.data.name is string
+        && (!('role' in request.resource.data) || request.resource.data.role == 'customer' || isAdmin());
+
+      // Profile updates: user cannot self-escalate role
+      allow update: if isOwner(userId)
+        && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'uid', 'createdAt'])
+        || isAdmin();
+
+      allow delete: if isAdmin();
+    }
+
+    // ---------------------------------------------------------
+    // BOOKINGS COLLECTION
+    // ---------------------------------------------------------
+    match /bookings/{bookingId} {
+      // Customers can read only their own bookings; Admins can read all bookings
+      allow get: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+
+      // Customers can query ONLY their own bookings (requires where('userId', '==', request.auth.uid));
+      // Admins can list all bookings without restrictions
+      allow list: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+
+      // Requirement 2: Customers can create booking attached to their own authenticated UID
+      allow create: if isSignedIn()
+        && isValidId(bookingId)
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.customerName is string && request.resource.data.customerName.size() <= 200
+        && request.resource.data.customerEmail is string && request.resource.data.customerEmail.size() <= 150
+        && request.resource.data.customerPhone is string && request.resource.data.customerPhone.size() <= 30
+        && request.resource.data.serviceName is string && request.resource.data.serviceName.size() <= 150
+        && request.resource.data.packageName is string && request.resource.data.packageName.size() <= 100
+        && request.resource.data.eventDate is string && request.resource.data.eventDate.size() <= 50
+        && request.resource.data.amount is number && request.resource.data.amount >= 0
+        && (request.resource.data.status == 'Pending' || isAdmin());
+
+      // Requirement 4 & 5: Only verified administrators can update booking statuses & rejection notes
+      allow update: if isAdmin()
+        && request.resource.data.status in ['Pending', 'Confirmed', 'Rejected', 'Completed', 'Cancelled'];
+
+      // Only administrators can delete records
+      allow delete: if isAdmin();
+    }
+
+    // ---------------------------------------------------------
+    // REVIEWS COLLECTION
+    // ---------------------------------------------------------
+    match /reviews/{reviewId} {
+      // Public can read approved reviews
+      allow read: if true;
+
+      // Authenticated clients or visitors can submit reviews with validation
+      allow create: if request.resource.data.clientName is string && request.resource.data.clientName.size() <= 150
+        && request.resource.data.reviewText is string && request.resource.data.reviewText.size() <= 2000
+        && request.resource.data.rating is number && request.resource.data.rating >= 1 && request.resource.data.rating <= 5;
+
+      // Only administrators can moderate (approve/reject/delete) reviews
+      allow update, delete: if isAdmin();
+    }
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "name": "ng-digital-studio-backend",
+  "version": "1.0.0",
+  "description": "Express.js REST API and MySQL Data Service for NG Digital Studio & Admin Panel",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "tsx watch server.ts"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.3",
+    "express": "^4.21.2"
+  }
+}
